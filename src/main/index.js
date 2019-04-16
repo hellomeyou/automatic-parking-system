@@ -26,8 +26,8 @@ function createWindow () {
     title: 'auto-park',
     vibrancy: 'ultra-dark',
     transparent: true,
-    titleBarStyle: 'hidden',
-    resizable: false
+    titleBarStyle: 'hidden'
+    // resizable: false
   })
 
   mainWindow.loadURL(winURL)
