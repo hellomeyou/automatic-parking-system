@@ -20,8 +20,8 @@ function createWindow () {
    * Initial window options
    */
   mainWindow = new BrowserWindow({
-    // height: 600,
-    // width: 880,
+    height: 600,
+    width: 880,
     fullscreen: true,
     center: true,
     title: 'auto-park',
