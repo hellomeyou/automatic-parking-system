@@ -26,8 +26,8 @@ function createWindow () {
     center: true,
     title: 'automatic parking',
     vibrancy: 'ultra-dark',
-    transparent: true,
-    titleBarStyle: 'hidden',
+    // transparent: true,
+    // titleBarStyle: 'hidden',
     darkTheme: true,
     resizable: false
   })
