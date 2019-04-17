@@ -1,5 +1,6 @@
 <template lang="pug">
     .usermode
+        router-link.usermode(to="/") 首页
         .title 用户模式界面
         .usermode__main
             .car.garage
@@ -42,6 +43,10 @@
 <style scoped lang="scss">
     .usermode {
         flex: 1;
+        a {
+            display: block;
+            color: rgba(255, 255, 255, 0.6);
+        }
         .title {
             text-align: center;
             color: rgba(#fff, 0.6)

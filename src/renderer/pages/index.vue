@@ -17,6 +17,7 @@
         justify-content: center;
         align-items: center;
         a {
+            margin: 0 20px;
             display: block;
             color: rgba(255, 255, 255, 0.6);
         }

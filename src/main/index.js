@@ -22,14 +22,14 @@ function createWindow () {
   mainWindow = new BrowserWindow({
     height: 600,
     width: 880,
-    // fullscreen: true,
+    fullscreen: true,
     center: true,
-    title: 'auto-park',
+    title: 'automatic parking',
     vibrancy: 'ultra-dark',
     transparent: true,
-    titleBarStyle: 'hidden'
-    // darkTheme: true,
-    // resizable: false
+    titleBarStyle: 'hidden',
+    darkTheme: true,
+    resizable: false
   })
 
   mainWindow.loadURL(winURL)
