@@ -11,9 +11,14 @@ export default new Router({
       component: require('@/pages/index').default
     },
     {
-      path: '/usermode/usermode',
+      path: '/usermode/index',
       name: 'usermode',
-      component: require('@/pages/usermode/usermode').default
+      component: require('@/pages/usermode/index').default
+    },
+    {
+      path: '/calibrationmodel/index',
+      name: 'calibrationmodel',
+      component: require('@/pages/calibrationmodel/index').default
     },
     {
       path: '*',

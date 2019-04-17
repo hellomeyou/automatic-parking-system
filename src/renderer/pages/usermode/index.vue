@@ -41,6 +41,11 @@
 
 <style scoped lang="scss">
     .usermode {
+        flex: 1;
+        .title {
+            text-align: center;
+            color: rgba(#fff, 0.6)
+        }
         &__main {
             height: 100vh;
             display: flex;

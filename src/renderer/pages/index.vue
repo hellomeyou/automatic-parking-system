@@ -1,7 +1,7 @@
 <template lang="pug">
     .login
-        .login__main
-            router-link.usermode(to="/usermode/usermode") 用户模式
+        router-link.usermode(to="/calibrationmodel/index") 校准模式
+        router-link.usermode(to="/usermode/index") 用户模式
 </template>
 
 <script>
@@ -12,10 +12,13 @@
 
 <style scoped lang="scss">
     .login {
-        &__main {
-            display: flex;
-            justify-content: center;
-            align-items: center;
+        flex: 1;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        a {
+            display: block;
+            color: rgba(255, 255, 255, 0.6);
         }
     }
 </style>
