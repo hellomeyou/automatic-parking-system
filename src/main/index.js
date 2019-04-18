@@ -1,6 +1,7 @@
 'use strict'
 
-import { app, BrowserWindow } from 'electron'
+import { app, BrowserWindow, ipcMain } from 'electron'
+import '../utils/server'
 
 /**
  * Set `__static` path to static files in production
@@ -53,6 +54,9 @@ app.on('activate', () => {
   }
 })
 
+ipcMain.on('sendMessage', (event, file) => {
+  require('../utils/client')
+})
 /**
  * Auto Updater
  *

@@ -91,6 +91,7 @@
 </template>
 
 <script>
+  import { ipcRenderer } from 'electron'
   export default {
     name: 'index',
     data () {
@@ -98,6 +99,9 @@
         formData: {},
         formInit: {}
       }
+    },
+    created () {
+      ipcRenderer.send('sendMessage')
     },
     methods: {
       onLevelCalibration () {
