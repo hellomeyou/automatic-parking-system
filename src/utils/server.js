@@ -10,7 +10,19 @@ server.on('listening', function () {
 })
 
 server.on('message', function (message, remote) {
-  console.log(remote.address + ':' + remote.port + ' - ' + message)
+  const data = message.toString('utf8')
+
+  const type = data.match(/ANS:(.*?)=/)[1]
+  const obj = JSON.parse(data.replace(data.match(/ANS:(.*?)=/)[0], ''))
+  switch (type) {
+    case 'is_initialize':
+      console.log(obj)
+      break
+    case 'runtime_para':
+      console.log(obj)
+      console.log(obj.wheel_angle)
+      break
+  }
 })
 
 server.bind(PORT, HOST)

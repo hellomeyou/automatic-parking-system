@@ -2,6 +2,7 @@
 
 import { app, BrowserWindow, ipcMain } from 'electron'
 import '../utils/server'
+import client from '../utils/client'
 
 /**
  * Set `__static` path to static files in production
@@ -53,10 +54,13 @@ app.on('activate', () => {
     createWindow()
   }
 })
-
 ipcMain.on('sendMessage', (event, file) => {
-  require('../utils/client')
+  client.isInitialize()
 })
+
+// ipcMain.on('sendMessage', (event, file) => {
+//   require('../utils/client')
+// })
 /**
  * Auto Updater
  *

@@ -88,27 +88,67 @@
                         el-input(v-model='formData.user', placeholder='')
                 el-form-item
                     el-button(type='primary', @click='onLevelCalibration') 测量车轮
+        #myChart(style="width: 300px;height: 300px;")
 </template>
 
 <script>
-  import { ipcRenderer } from 'electron'
-  export default {
-    name: 'index',
-    data () {
-      return {
-        formData: {},
-        formInit: {}
-      }
-    },
-    created () {
-      ipcRenderer.send('sendMessage')
-    },
-    methods: {
-      onLevelCalibration () {
-        console.log('提交了')
-      }
+    import { ipcRenderer } from 'electron'
+    import echarts from 'echarts/lib/echarts'
+    require('echarts/lib/chart/scatter')
+    require('echarts/lib/component/tooltip')
+    require('echarts/lib/component/title')
+
+    export default {
+        name: 'index',
+        data () {
+            return {
+                formData: {},
+                formInit: {}
+            }
+        },
+        created () {
+            ipcRenderer.on('listenInit', (event, args) => {
+                console.log(event)
+                console.log(args)
+            })
+            ipcRenderer.send('sendMessage')
+        },
+        mounted () {
+            this.drawLine()
+        },
+        methods: {
+            onLevelCalibration () {
+                console.log('提交了')
+            },
+            drawLine () {
+                // 基于准备好的dom，初始化echarts实例
+                let myChart = echarts.init(document.getElementById('myChart'))
+                // 绘制图表
+                myChart.setOption({
+                    title: {text: '测量区扫描点'},
+                    xAxis: {},
+                    yAxis: {},
+                    series: [{
+                        symbolSize: 20,
+                        data: [
+                            [10.0, 8.04],
+                            [8.0, 6.95],
+                            [13.0, 7.58],
+                            [9.0, 8.81],
+                            [11.0, 8.33],
+                            [14.0, 9.96],
+                            [6.0, 7.24],
+                            [4.0, 4.26],
+                            [12.0, 10.84],
+                            [7.0, 4.82],
+                            [5.0, 5.68]
+                        ],
+                        type: 'scatter'
+                    }]
+                })
+            }
+        }
     }
-  }
 </script>
 
 <style scoped lang="scss">
