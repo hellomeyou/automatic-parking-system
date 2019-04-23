@@ -1,7 +1,7 @@
 'use strict'
 
 import { app, BrowserWindow, ipcMain } from 'electron'
-import '../utils/server'
+// import '../utils/server'
 import client from '../utils/client'
 
 /**
@@ -54,8 +54,47 @@ app.on('activate', () => {
     createWindow()
   }
 })
-ipcMain.on('sendMessage', (event, file) => {
-  client.isInitialize()
+
+const Server = () => {
+  const PORT = 2222
+  const HOST = '127.0.0.1'
+
+  const dgram = require('dgram')
+  const server = dgram.createSocket('udp4')
+
+  server.on('listening', function () {
+    const address = server.address()
+    console.log('UDP Server listening on ' + address.address + ':' + address.port)
+  })
+
+  server.on('message', function (message, remote) {
+    const data = message.toString('utf8')
+
+    const type = data.match(/ANS:(.*?)=/)[1]
+    const obj = JSON.parse(data.replace(data.match(/ANS:(.*?)=/)[0], ''))
+    switch (type) {
+      case 'is_initialize':
+        mainWindow.webContents.send('is_initialize-reply', obj)
+        break
+      case 'runtime_para':
+        mainWindow.webContents.send('runtime_para-reply', obj)
+        break
+    }
+  })
+
+  server.bind(PORT, HOST)
+}
+
+Server()
+
+ipcMain.once('is_initialize', async (event, file) => {
+  console.log(1)
+  await client.isInitialize()
+  console.log(2)
+  await client.runtimePara().catch(res => {
+    console.log(res)
+  })
+  console.log(3)
 })
 
 // ipcMain.on('sendMessage', (event, file) => {

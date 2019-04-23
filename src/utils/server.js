@@ -21,6 +21,11 @@ server.on('message', function (message, remote) {
     case 'runtime_para':
       console.log(obj)
       console.log(obj.wheel_angle)
+      // ipcMain.on('is_initialize', (event, file) => {
+      //   event.sender.send('is_initialize-reply', obj)
+      // })
+
+      mainWindow.webContents.send('is_initialize-reply', obj)
       break
   }
 })

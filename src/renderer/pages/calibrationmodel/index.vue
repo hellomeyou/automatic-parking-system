@@ -107,11 +107,9 @@
             }
         },
         created () {
-            ipcRenderer.on('listenInit', (event, args) => {
-                console.log(event)
+            ipcRenderer.on('runtime_para-reply', (event, args) => {
                 console.log(args)
             })
-            ipcRenderer.send('sendMessage')
         },
         mounted () {
             this.drawLine()
