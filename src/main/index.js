@@ -69,7 +69,6 @@ const Server = () => {
 
   server.on('message', function (message, remote) {
     const data = message.toString('utf8')
-
     const type = data.match(/ANS:(.*?)=/)[1]
     const obj = JSON.parse(data.replace(data.match(/ANS:(.*?)=/)[0], ''))
     switch (type) {
