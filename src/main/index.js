@@ -1,7 +1,7 @@
 'use strict'
 
 import { app, BrowserWindow, ipcMain } from 'electron'
-import '../utils/server'
+// import '../utils/server'
 import client from '../utils/client'
 
 /**
@@ -54,8 +54,81 @@ app.on('activate', () => {
     createWindow()
   }
 })
-ipcMain.on('sendMessage', (event, file) => {
-  client.isInitialize()
+
+const Server = () => {
+  const PORT = 2222
+  const HOST = '127.0.0.1'
+
+  const dgram = require('dgram')
+  const server = dgram.createSocket('udp4')
+
+  server.on('listening', function () {
+    const address = server.address()
+    console.log('UDP Server listening on ' + address.address + ':' + address.port)
+  })
+
+  server.on('message', function (message, remote) {
+    const data = message.toString('utf8')
+
+    const type = data.match(/ANS:(.*?)=/)[1]
+    const obj = JSON.parse(data.replace(data.match(/ANS:(.*?)=/)[0], ''))
+    switch (type) {
+      case 'is_initialize':
+        mainWindow.webContents.send('is_initialize-reply', obj)
+        break
+      case 'runtime_para':
+        mainWindow.webContents.send('runtime_para-reply', obj)
+        break
+      case 'runtime_mode':
+        mainWindow.webContents.send('runtime_mode-reply', obj)
+        break
+      case 'parking_side':
+        mainWindow.webContents.send('parking_side-reply', obj)
+        break
+      case 'height_from_the_ground':
+        mainWindow.webContents.send('height_from_the_ground-reply', obj)
+        break
+      case 'view_layer2':
+        mainWindow.webContents.send('view_layer2-reply', obj)
+        break
+      case 'vehicle_attitude':
+        mainWindow.webContents.send('vehicle_attitude-reply', obj)
+        break
+    }
+  })
+
+  server.bind(PORT, HOST)
+}
+
+Server()
+
+ipcMain.once('is_initialize', async (event, file) => {
+  Promise.all([client.isInitialize(), client.runtimePara()]).catch(res => {
+    console.log(res)
+  })
+})
+
+ipcMain.on('runtime_mode', (event, file) => {
+  client.runtimeMode(file)
+})
+
+ipcMain.on('parking_side', (event, file) => {
+  client.parkingSide(file)
+})
+
+ipcMain.on('height_from_the_ground', (event, file) => {
+  client.heightFromTheGround(file)
+})
+
+ipcMain.on('view_layer2', (event, file) => {
+  client.viewLayer().catch(e => {
+    console.log(e)
+  })
+})
+ipcMain.on('vehicle_attitude', (event, file) => {
+  client.vehicleAttitude().catch(e => {
+    console.log(e)
+  })
 })
 
 // ipcMain.on('sendMessage', (event, file) => {
