@@ -79,6 +79,21 @@ const Server = () => {
       case 'runtime_para':
         mainWindow.webContents.send('runtime_para-reply', obj)
         break
+      case 'runtime_mode':
+        mainWindow.webContents.send('runtime_mode-reply', obj)
+        break
+      case 'parking_side':
+        mainWindow.webContents.send('parking_side-reply', obj)
+        break
+      case 'height_from_the_ground':
+        mainWindow.webContents.send('height_from_the_ground-reply', obj)
+        break
+      case 'view_layer2':
+        mainWindow.webContents.send('view_layer2-reply', obj)
+        break
+      case 'vehicle_attitude':
+        mainWindow.webContents.send('vehicle_attitude-reply', obj)
+        break
     }
   })
 
@@ -88,13 +103,32 @@ const Server = () => {
 Server()
 
 ipcMain.once('is_initialize', async (event, file) => {
-  console.log(1)
-  await client.isInitialize()
-  console.log(2)
-  await client.runtimePara().catch(res => {
+  Promise.all([client.isInitialize(), client.runtimePara()]).catch(res => {
     console.log(res)
   })
-  console.log(3)
+})
+
+ipcMain.on('runtime_mode', (event, file) => {
+  client.runtimeMode(file)
+})
+
+ipcMain.on('parking_side', (event, file) => {
+  client.parkingSide(file)
+})
+
+ipcMain.on('height_from_the_ground', (event, file) => {
+  client.heightFromTheGround(file)
+})
+
+ipcMain.on('view_layer2', (event, file) => {
+  client.viewLayer().catch(e => {
+    console.log(e)
+  })
+})
+ipcMain.on('vehicle_attitude', (event, file) => {
+  client.vehicleAttitude().catch(e => {
+    console.log(e)
+  })
 })
 
 // ipcMain.on('sendMessage', (event, file) => {

@@ -15,6 +15,8 @@
                 console.log(args)
                 if (args.is_initialize === 'no') {
                     this.$router.push('/calibrationmodel/index')
+                } else if (args.is_initialize === 'yes') {
+                    this.$router.push('/usermode/index')
                 }
             })
         }
