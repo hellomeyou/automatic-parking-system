@@ -184,12 +184,9 @@
         data () {
             return {
                 formData: {},
-                standard: {
-                    length: 8000,
-                    height: 6000
-                },
+                standard: {},
                 formInit: {},
-                runtimeMode: 2,
+                runtimeMode: 1,
                 parkingSide: {
                     No1: {},
                     No2: {},

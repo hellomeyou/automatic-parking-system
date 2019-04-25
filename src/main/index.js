@@ -24,14 +24,14 @@ function createWindow () {
   mainWindow = new BrowserWindow({
     height: 600,
     width: 880,
-    fullscreen: true,
+    // fullscreen: true,
     center: true,
     title: 'automatic parking',
     vibrancy: 'ultra-dark',
     // transparent: true,
     // titleBarStyle: 'hidden',
-    darkTheme: true,
-    resizable: false
+    darkTheme: true
+    // resizable: false
   })
 
   mainWindow.loadURL(winURL)

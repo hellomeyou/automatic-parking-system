@@ -36,7 +36,7 @@ const runtimePara = () => {
 
 const runtimeMode = (step) => {
   return new Promise(resolve => {
-    const message = Buffer.from(`POST:runtime_mode=1${step}`)
+    const message = Buffer.from(`POST:runtime_mode=${step}`)
     // const message = Buffer.from('ANS:runtime_mode={"runtime": "yes"}')
     client.send(message, PORT, HOST, function (err, bytes) {
       if (err) throw err
@@ -51,10 +51,10 @@ const parkingSide = (value) => {
   return new Promise(resolve => {
     let message
     if (value) {
-      message = Buffer.from(`GET:parking_side`)
+      message = Buffer.from(`POST:parking_side=${value}`)
       // message = Buffer.from(`ANS:parking_side={"parking": "yes"}`)
     } else {
-      message = Buffer.from(`POST:parking_side=${value}`)
+      message = Buffer.from(`GET:parking_side`)
       // message = Buffer.from(`ANS:parking_side={
       //   "No1": {
       //       "length": 3991,
