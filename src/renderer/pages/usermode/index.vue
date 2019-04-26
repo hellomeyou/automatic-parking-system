@@ -12,7 +12,7 @@
             .car.garage(:style="{width: garage.length + 'px', height: garage.height + 'px'}")
                 .stopline(:style="{width: targetArea.length + 'px', height: targetArea.height + 'px', top: leftEndline + 'px', left: beforeEndline + 'px'}")
                 <!--.car__main(:style="{'transform': 'rotate(' + carDegree + 'deg)', bottom: carPosition.y + 'px', left: carPosition.x + 'px' }")-->
-                .car__main(:style="{'transform': 'translate('+ carPosition.x +'px, '+ (400 - carWidth - carPosition.y) +'px) rotate(' + carDegree + 'deg)'}")
+                .car__main(:style="{'transform': 'translate('+ carPosition.x +'px, '+ (this.garage.height - carWidth - carPosition.y) +'px) rotate(' + carDegree + 'deg)'}")
                     .car__LeftFrontWheel.car--wheel(:style="{'transform': 'rotate(' + LeftFrontWheelDegree + 'deg)'}")
                     .car__RightFrontWheel.car--wheel(:style="{'transform': 'rotate(' + RightFrontWheelDegree + 'deg)'}")
                     .car__LeftRearWheel.car--wheel
@@ -116,6 +116,7 @@
                 //     wheelbase: 2600
                 // }
                 if (args.success) {
+                    console.log(args.data)
                     const data = args.data
                     this.carDegree = -data.car_angle / 1000
                     this.carWidth = data.car_width / 10
@@ -143,10 +144,11 @@
                 }
             })
             this.onVehicleAttitude()
-            // setInterval(() => {
-            //     this.onVehicleAttitude()
-            // }, 100)
             setInterval(() => {
+                this.onVehicleAttitude()
+            }, 100)
+            setInterval(() => {
+                console.log(this.temporaryData)
                 if (this.onStddev(this.temporaryData.x) < 2 && this.onStddev(this.temporaryData.y) < 2) {
                     console.log(this.wheelAngle)
                     if (this.carPosition.x - this.beforeEndline < 0 || (this.carPosition.y < this.leftEndline || (parseInt(this.carPosition.y) + parseInt(this.carWidth)) > this.rightEndline)) {
