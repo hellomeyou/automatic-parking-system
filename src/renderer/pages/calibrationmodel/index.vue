@@ -227,137 +227,171 @@
         created () {
             ipcRenderer.on('runtime_para-reply', (event, args) => {
                 console.log(args)
-                this.calibrationError = args
-                for (let item in args) {
-                    if (!args[item]) {
-                        this.$message({
-                            message: `${item}数据不正常，"${item}:${args[item]}"`,
-                            type: 'success'
-                        })
+                if (args.success) {
+                    this.calibrationError = args.data
+                    for (let item in args.data) {
+                        if (!args.data[item]) {
+                            this.$message({
+                                message: `${item}数据不正常，"${item}:${args.data[item]}"`,
+                                type: 'success'
+                            })
+                        }
                     }
+                } else {
+                    this.$message({
+                        message: args.message,
+                        type: 'success'
+                    })
                 }
             })
             ipcRenderer.send('runtime_mode', 1)
             ipcRenderer.on('runtime_mode-reply', (event, args) => {
-                console.log(args)
+                if (args.success) {
+                    console.log(args)
+                } else {
+                    this.$message({
+                        message: args.message,
+                        type: 'success'
+                    })
+                }
             })
 
             ipcRenderer.on('view_layer2-reply', (event, args) => {
-                console.log(args)
-                this.viewLayerData = args
+                if (args.success) {
+                    console.log(args)
+                    this.viewLayerData = args.data
+                } else {
+                    this.$message({
+                        message: args.message,
+                        type: 'success'
+                    })
+                }
             })
             ipcRenderer.on('parking_side-reply', (event, args) => {
-                if (args.parking && args.parking === 'yes') {
-                    // 切换到校准离地高度
-                    ipcRenderer.send('runtime_mode', 2)
-                    // 视角
-                    ipcRenderer.send('view_layer2')
+                if (args.success) {
+                    const data = args.data
+                    if (data.parking && data.parking === 'yes') {
+                        // 切换到校准离地高度
+                        ipcRenderer.send('runtime_mode', 2)
+                        // 视角
+                        ipcRenderer.send('view_layer2')
 
-                    this.runtimeMode = 2
-                } else {
-                    this.parkingSide = args
-                    const lengthAbs1 = Number(args.No1.length) + Number(args.No4.length)
-                    const lengthAbs2 = Number(args.No2.length) + Number(args.No3.length)
-                    const heightAbs1 = Number(args.No1.height) + Number(args.No2.height)
-                    const heightAbs2 = Number(args.No3.height) + Number(args.No3.height)
-                    switch (true) {
-                        case Math.abs(this.standard.length - lengthAbs1) >= this.calibrationError.calibration_abs_error :
-                        case Math.abs(this.standard.length - lengthAbs2) >= this.calibrationError.calibration_abs_error :
-                            this.$message({
-                                message: `本次测量矩形长误差不在合理范围内，请调准传感器，1号和4号边矩形长：${lengthAbs1}，2号和3号边矩形长：${lengthAbs2}`,
-                                type: 'warning'
-                            })
-                            break
-                        case Math.abs(this.standard.height - heightAbs1) >= this.calibrationError.calibration_rel_error :
-                        case Math.abs(this.standard.height - heightAbs2) >= this.calibrationError.calibration_rel_error :
-                            this.$message({
-                                message: `本次测量矩形宽误差不在合理范围内，请调准传感器，1号和2号边矩形宽：${heightAbs1}，3号和4号边矩形宽：${heightAbs2}`,
-                                type: 'warning'
-                            })
-                            break
-                        default:
-                            this.calibrationQualified.push(args)
-                            this.calibrationCount += 1
-
-                            console.log(this.calibrationQualified)
-                            if (this.calibrationCount === 5) {
-                                let Length = 0
-                                let Height = 0
-                                this.calibrationQualified.forEach(item => {
-                                    console.log(item)
-                                    Length += item.No1.length + item.No2.length + item.No3.length + item.No4.length
-                                    Height += item.No1.height + item.No2.height + item.No3.height + item.No4.height
+                        this.runtimeMode = 2
+                    } else {
+                        this.parkingSide = data
+                        const lengthAbs1 = Number(data.No1.length) + Number(data.No4.length)
+                        const lengthAbs2 = Number(data.No2.length) + Number(data.No3.length)
+                        const heightAbs1 = Number(data.No1.height) + Number(data.No2.height)
+                        const heightAbs2 = Number(data.No3.height) + Number(data.No3.height)
+                        switch (true) {
+                            case Math.abs(this.standard.length - lengthAbs1) >= this.calibrationError.calibration_abs_error :
+                            case Math.abs(this.standard.length - lengthAbs2) >= this.calibrationError.calibration_abs_error :
+                                this.$message({
+                                    message: `本次测量矩形长误差不在合理范围内，请调准传感器，1号和4号边矩形长：${lengthAbs1}，2号和3号边矩形长：${lengthAbs2}`,
+                                    type: 'warning'
                                 })
-                                // 发送平均校准长宽
-                                console.log(Length)
-                                const data = `{length: ${Length / 10}, height: ${Height / 10}`
-                                console.log(data)
-                                ipcRenderer.send('parking_side', data)
-                            }
-                            this.$message({
-                                message: `本次测量校准在合理范围内`,
-                                type: 'success'
-                            })
+                                break
+                            case Math.abs(this.standard.height - heightAbs1) >= this.calibrationError.calibration_rel_error :
+                            case Math.abs(this.standard.height - heightAbs2) >= this.calibrationError.calibration_rel_error :
+                                this.$message({
+                                    message: `本次测量矩形宽误差不在合理范围内，请调准传感器，1号和2号边矩形宽：${heightAbs1}，3号和4号边矩形宽：${heightAbs2}`,
+                                    type: 'warning'
+                                })
+                                break
+                            default:
+                                this.calibrationQualified.push(data)
+                                this.calibrationCount += 1
+
+                                console.log(this.calibrationQualified)
+                                if (this.calibrationCount === 5) {
+                                    let Length = 0
+                                    let Height = 0
+                                    this.calibrationQualified.forEach(item => {
+                                        console.log(item)
+                                        Length += item.No1.length + item.No2.length + item.No3.length + item.No4.length
+                                        Height += item.No1.height + item.No2.height + item.No3.height + item.No4.height
+                                    })
+                                    // 发送平均校准长宽
+                                    console.log(Length)
+                                    const data = `{length: ${Length / 10}, height: ${Height / 10}`
+                                    console.log(data)
+                                    ipcRenderer.send('parking_side', data)
+                                }
+                                this.$message({
+                                    message: `本次测量校准在合理范围内`,
+                                    type: 'success'
+                                })
+                        }
                     }
+                } else {
+                    this.$message({
+                        message: args.message,
+                        type: 'success'
+                    })
                 }
             })
             ipcRenderer.on('height_from_the_ground-reply', (event, args) => {
-                if (args.height_from_the_ground && args.height_from_the_ground === 'yes') {
-                    this.allowSaveSet = false
+                if (args.success) {
+                    const data = args.data
+                    if (data.height_from_the_ground && data.height_from_the_ground === 'yes') {
+                        this.allowSaveSet = false
+                    } else {
+                        this.heightFromGround = data
+
+                        if (this.heightFromGround.No1 >= this.calibrationError.hog_min && this.heightFromGround.No1 <= this.calibrationError.hog_max) {
+                            if (this.heightFromGroundAverage.No1.count < 5) {
+                                this.heightFromGroundAverage.No1.value.push(this.heightFromGround.No1)
+                                this.heightFromGroundAverage.No1.count = this.heightFromGroundAverage.No1.value.length
+                            }
+                        } else {
+                            this.$message({
+                                message: `测量高度不符合[${this.calibrationError.hog_min}, ${this.calibrationError.hog_max}], 请重新校准，该次测量不参与计算`,
+                                type: 'warning'
+                            })
+                        }
+                        if (this.heightFromGround.No2 >= this.calibrationError.hog_min && this.heightFromGround.No2 <= this.calibrationError.hog_max) {
+                            if (this.heightFromGroundAverage.No2.count < 5) {
+                                this.heightFromGroundAverage.No2.value.push(this.heightFromGround.No2)
+                                this.heightFromGroundAverage.No2.count = this.heightFromGroundAverage.No2.value.length
+                            }
+                        } else {
+                            this.$message({
+                                message: `测量高度不符合[${this.calibrationError.hog_min}, ${this.calibrationError.hog_max}], 请重新校准，该次测量不参与计算`,
+                                type: 'warning'
+                            })
+                        }
+                        if (this.heightFromGround.No3 >= this.calibrationError.hog_min && this.heightFromGround.No3 <= this.calibrationError.hog_max) {
+                            if (this.heightFromGroundAverage.No3.count < 5) {
+                                this.heightFromGroundAverage.No3.value.push(this.heightFromGround.No3)
+                                this.heightFromGroundAverage.No3.count = this.heightFromGroundAverage.No3.value.length
+                            }
+                        } else {
+                            this.$message({
+                                message: `测量高度不符合[${this.calibrationError.hog_min}, ${this.calibrationError.hog_max}], 请重新校准，该次测量不参与计算`,
+                                type: 'warning'
+                            })
+                        }
+                        if (this.heightFromGround.No4 >= this.calibrationError.hog_min && this.heightFromGround.No4 <= this.calibrationError.hog_max) {
+                            if (this.heightFromGroundAverage.No4.count < 5) {
+                                this.heightFromGroundAverage.No4.value.push(this.heightFromGround.No4)
+                                this.heightFromGroundAverage.No4.count = this.heightFromGroundAverage.No4.value.length
+                            }
+                        } else {
+                            this.$message({
+                                message: `测量高度不符合[${this.calibrationError.hog_min}, ${this.calibrationError.hog_max}], 请重新校准，该次测量不参与计算`,
+                                type: 'warning'
+                            })
+                        }
+
+                        if (this.heightFromGroundAverage.No1.count === 5 && this.heightFromGroundAverage.No2.count === 5 && this.heightFromGroundAverage.No3.count === 5 && this.heightFromGroundAverage.No4.count === 5) {
+                            const data = `{No1:${this.wheel1Height},No2:${this.wheel2Height},No3:${this.wheel3Height},No4:${this.wheel4Height}}`
+                            console.log(data)
+                            // this.runtimeMode = 0
+                            ipcRenderer.send('height_from_the_ground', data)
+                        }
+                    }
                 } else {
-                    this.heightFromGround = args
 
-                    if (this.heightFromGround.No1 >= this.calibrationError.hog_min && this.heightFromGround.No1 <= this.calibrationError.hog_max) {
-                        if (this.heightFromGroundAverage.No1.count < 5) {
-                            this.heightFromGroundAverage.No1.value.push(this.heightFromGround.No1)
-                            this.heightFromGroundAverage.No1.count = this.heightFromGroundAverage.No1.value.length
-                        }
-                    } else {
-                        this.$message({
-                            message: `测量高度不符合[${this.calibrationError.hog_min}, ${this.calibrationError.hog_max}], 请重新校准，该次测量不参与计算`,
-                            type: 'warning'
-                        })
-                    }
-                    if (this.heightFromGround.No2 >= this.calibrationError.hog_min && this.heightFromGround.No2 <= this.calibrationError.hog_max) {
-                        if (this.heightFromGroundAverage.No2.count < 5) {
-                            this.heightFromGroundAverage.No2.value.push(this.heightFromGround.No2)
-                            this.heightFromGroundAverage.No2.count = this.heightFromGroundAverage.No2.value.length
-                        }
-                    } else {
-                        this.$message({
-                            message: `测量高度不符合[${this.calibrationError.hog_min}, ${this.calibrationError.hog_max}], 请重新校准，该次测量不参与计算`,
-                            type: 'warning'
-                        })
-                    }
-                    if (this.heightFromGround.No3 >= this.calibrationError.hog_min && this.heightFromGround.No3 <= this.calibrationError.hog_max) {
-                        if (this.heightFromGroundAverage.No3.count < 5) {
-                            this.heightFromGroundAverage.No3.value.push(this.heightFromGround.No3)
-                            this.heightFromGroundAverage.No3.count = this.heightFromGroundAverage.No3.value.length
-                        }
-                    } else {
-                        this.$message({
-                            message: `测量高度不符合[${this.calibrationError.hog_min}, ${this.calibrationError.hog_max}], 请重新校准，该次测量不参与计算`,
-                            type: 'warning'
-                        })
-                    }
-                    if (this.heightFromGround.No4 >= this.calibrationError.hog_min && this.heightFromGround.No4 <= this.calibrationError.hog_max) {
-                        if (this.heightFromGroundAverage.No4.count < 5) {
-                            this.heightFromGroundAverage.No4.value.push(this.heightFromGround.No4)
-                            this.heightFromGroundAverage.No4.count = this.heightFromGroundAverage.No4.value.length
-                        }
-                    } else {
-                        this.$message({
-                            message: `测量高度不符合[${this.calibrationError.hog_min}, ${this.calibrationError.hog_max}], 请重新校准，该次测量不参与计算`,
-                            type: 'warning'
-                        })
-                    }
-
-                    if (this.heightFromGroundAverage.No1.count === 5 && this.heightFromGroundAverage.No2.count === 5 && this.heightFromGroundAverage.No3.count === 5 && this.heightFromGroundAverage.No4.count === 5) {
-                        const data = `{No1:${this.wheel1Height},No2:${this.wheel2Height},No3:${this.wheel3Height},No4:${this.wheel4Height}}`
-                        console.log(data)
-                        // this.runtimeMode = 0
-                        ipcRenderer.send('height_from_the_ground', data)
-                    }
                 }
             })
         },

@@ -67,26 +67,36 @@
             ipcRenderer.send('runtime_mode', 3)
             ipcRenderer.on('runtime_para-reply', (event, args) => {
                 console.log(args)
-                this.garageCenter = {
-                    x: args.parking_x / 10 / 2,
-                    y: args.parking_y / 10 / 2
-                }
+                if (args.success) {
+                    const data = args.data
+                    this.garageCenter = {
+                        x: data.parking_x / 10 / 2,
+                        y: data.parking_y / 10 / 2
+                    }
 
-                this.garage = {
-                    length: args.parking_x / 10,
-                    height: args.parking_y / 10
+                    this.garage = {
+                        length: data.parking_x / 10,
+                        height: data.parking_y / 10
+                    }
+                    this.targetArea = {
+                        length: data.target_x / 10,
+                        height: data.target_y / 10
+                    }
+                    this.wheelAngle = data.wheel_angle
+                    this.beforeEndline = (data.parking_x - data.target_x) / 10 / 2
+                    this.leftEndline = (data.parking_y - data.target_y) / 10 / 2
+                    this.rightEndline = (data.parking_y - (data.parking_y - data.target_y) / 2) / 10
+                } else {
+                    this.$message({
+                        message: args.message,
+                        type: 'success'
+                    })
                 }
-                this.targetArea = {
-                    length: args.target_x / 10,
-                    height: args.target_y / 10
-                }
-                this.wheelAngle = args.wheel_angle
-                this.beforeEndline = (args.parking_x - args.target_x) / 10 / 2
-                this.leftEndline = (args.parking_y - args.target_y) / 10 / 2
-                this.rightEndline = (args.parking_y - (args.parking_y - args.target_y) / 2) / 10
             })
-            if (this.garageCenter.x && this.garageCenter.y) {
-                console.log('发送了')
+            /*
+            *  重新请求当前车库标准
+            * */
+            if (!this.garageCenter.x && !this.garageCenter.y) {
                 ipcRenderer.send('runtime_para')
             }
 
@@ -105,24 +115,32 @@
                 //     wheel2behind: 750,
                 //     wheelbase: 2600
                 // }
-                this.carDegree = args.car_angle
-                this.carWidth = args.car_width / 10
-                this.carHeight = args.car_length / 10
-                this.carCenter = {
-                    x: args.car_center.x / 10,
-                    y: args.car_center.y / 10
-                }
+                if (args.success) {
+                    const data = args.data
+                    this.carDegree = data.car_angle
+                    this.carWidth = data.car_width / 10
+                    this.carHeight = data.car_length / 10
+                    this.carCenter = {
+                        x: data.car_center.x / 10,
+                        y: data.car_center.y / 10
+                    }
 
-                this.carPosition = {
-                    x: args.car_center.x / 10 - args.car_length / 10 / 2,
-                    y: args.car_center.y / 10 - args.car_width / 10 / 2
-                }
-                console.log(this.carPosition)
-                this.LeftFrontWheelDegree = args.left_front_wheel_angle - args.car_angle
-                this.RightFrontWheelDegree = args.right_front_wheel_angle - args.car_angle
+                    this.carPosition = {
+                        x: data.car_center.x / 10 - data.car_length / 10 / 2,
+                        y: data.car_center.y / 10 - data.car_width / 10 / 2
+                    }
+                    console.log(this.carPosition)
+                    this.LeftFrontWheelDegree = data.left_front_wheel_angle - data.car_angle
+                    this.RightFrontWheelDegree = data.right_front_wheel_angle - data.car_angle
 
-                this.temporaryData.x.push(args.car_center.x)
-                this.temporaryData.y.push(args.car_center.y)
+                    this.temporaryData.x.push(data.car_center.x)
+                    this.temporaryData.y.push(data.car_center.y)
+                } else {
+                    this.$message({
+                        message: args.message,
+                        type: 'success'
+                    })
+                }
             })
             this.onVehicleAttitude()
             setInterval(() => {

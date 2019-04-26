@@ -13,10 +13,18 @@
             ipcRenderer.send('is_initialize')
             ipcRenderer.on('is_initialize-reply', (event, args) => {
                 console.log(args)
-                if (args.is_initialize === 'no') {
-                    this.$router.push('/calibrationmodel/index')
-                } else if (args.is_initialize === 'yes') {
-                    this.$router.push('/usermode/index')
+                if (args.success) {
+                    const data = args.data
+                    if (data.is_initialize === 'no') {
+                        this.$router.push('/calibrationmodel/index')
+                    } else if (data.is_initialize === 'yes') {
+                        this.$router.push('/usermode/index')
+                    }
+                } else {
+                    this.$message({
+                        message: args.message,
+                        type: 'success'
+                    })
                 }
             })
         }
