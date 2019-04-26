@@ -56,7 +56,7 @@
                                     template(slot="append") mm
                     el-form-item(label="已通过测量校准次数")
                         el-row( :gutter="20")
-                            el-col.line(:span='3')
+                            el-col.line(:span='6')
                                 el-input(v-model='calibrationCount', placeholder='', :disabled="true")
                                     template(slot="prepend") 次数
                             el-col.line(:span='6') 需测量通过校准5次
@@ -126,6 +126,7 @@
                         el-button(type='primary', @click='onCalibrationHeightFromGroundCount', :disabled="runtimeMode == 2 ? false : true") 测量车轮
             .index__main--flex
                 #myChart(style="width: 600px;height: 600px;")
+                el-button(type='primary', @click='onRefreshViewLayerData', :disabled="runtimeMode == 2 ? false : true") 刷新数据
                 el-button(type='primary', @click='viewLayer("all")', :disabled="runtimeMode == 2 ? false : true") 全景
                 el-button(type='primary', @click='viewLayer("no1")', :disabled="runtimeMode == 2 ? false : true") 一号轮
                 el-button(type='primary', @click='viewLayer("no2")', :disabled="runtimeMode == 2 ? false : true") 二号轮
@@ -503,6 +504,14 @@
             },
             onSaveSettings () {
                 this.$router.push('/usermode/index')
+            },
+            onRefreshViewLayerData () {
+                // 视角
+                ipcRenderer.send('view_layer2')
+                // this.$message({
+                //     message: `请填写测量校准轮胎直径`,
+                //     type: 'warning'
+                // })
             }
         }
     }

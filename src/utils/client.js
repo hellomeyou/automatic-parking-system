@@ -87,10 +87,10 @@ const heightFromTheGround = (value) => {
   return new Promise(resolve => {
     let message
     if (value) {
-      message = Buffer.from(`GET:height_from_the_ground`)
+      message = Buffer.from(`POST:height_from_the_ground=${value}`)
       // message = Buffer.from(`ANS:height_from_the_ground={"height_from_the_ground": "yes"}`)
     } else {
-      message = Buffer.from(`POST:height_from_the_ground=${value}`)
+      message = Buffer.from(`GET:height_from_the_ground`)
       // message = Buffer.from(`ANS:height_from_the_ground={
       //   "No1": 125,
       //   "No2": 127,
