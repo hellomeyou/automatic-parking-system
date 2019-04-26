@@ -123,7 +123,7 @@
                                 el-input(v-model='heightFromGroundAverage.No4.count', placeholder='', :disabled="true")
                                     template(slot="prepend") 测量次数平均
                     el-form-item
-                        el-button(type='primary', @click='onCalibrationHeightFromGroundCount', :disabled="runtimeMode == 2 ? false : true") 测量车轮
+                        el-button(type='primary', @click='onCalibrationHeightFromGroundCount', :disabled="runtimeMode == 2 && allowSaveSet ? false : true") 测量车轮
             .index__main--flex
                 #myChart(style="width: 600px;height: 600px;")
                 el-button(type='primary', @click='onRefreshViewLayerData', :disabled="runtimeMode == 2 ? false : true") 刷新数据
@@ -219,13 +219,23 @@
                 },
                 heightFromGroundCount: 0,
                 viewLayerData: null,
-                allowSaveSet: true
+                allowSaveSet: true,
+
+                sendAverage: false
             }
         },
         created () {
             ipcRenderer.on('runtime_para-reply', (event, args) => {
                 console.log(args)
                 this.calibrationError = args
+                for (let item in args) {
+                    if (!args[item]) {
+                        this.$message({
+                            message: `${item}数据不正常，"${item}:${args[item]}"`,
+                            type: 'success'
+                        })
+                    }
+                }
             })
             ipcRenderer.send('runtime_mode', 1)
             ipcRenderer.on('runtime_mode-reply', (event, args) => {
