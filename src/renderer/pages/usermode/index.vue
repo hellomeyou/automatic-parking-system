@@ -104,20 +104,20 @@
                 // {
                 //     car_length: 4600,
                 //     car_width: 1800,
-                //     car_angle: 1.5,
+                //     car_angle: 1500,
                 //     car_center: {
                 //         x: 4000,
                 //         y: 3000
                 //     },
-                //     left_front_wheel_angle: 1.35,
-                //     right_front_wheel_angle: 1.35,
+                //     left_front_wheel_angle: 1350,
+                //     right_front_wheel_angle: 1350,
                 //     wheel2front: 650,
                 //     wheel2behind: 750,
                 //     wheelbase: 2600
                 // }
                 if (args.success) {
                     const data = args.data
-                    this.carDegree = data.car_angle
+                    this.carDegree = -data.car_angle / 1000
                     this.carWidth = data.car_width / 10
                     this.carHeight = data.car_length / 10
                     this.carCenter = {
@@ -130,8 +130,8 @@
                         y: data.car_center.y / 10 - data.car_width / 10 / 2
                     }
                     console.log(this.carPosition)
-                    this.LeftFrontWheelDegree = data.left_front_wheel_angle - data.car_angle
-                    this.RightFrontWheelDegree = data.right_front_wheel_angle - data.car_angle
+                    this.LeftFrontWheelDegree = -data.left_front_wheel_angle / 1000 - -data.car_angle / 1000
+                    this.RightFrontWheelDegree = -data.right_front_wheel_angle / 1000 - -data.car_angle / 1000
 
                     this.temporaryData.x.push(data.car_center.x)
                     this.temporaryData.y.push(data.car_center.y)
@@ -143,9 +143,9 @@
                 }
             })
             this.onVehicleAttitude()
-            setInterval(() => {
-                this.onVehicleAttitude()
-            }, 100)
+            // setInterval(() => {
+            //     this.onVehicleAttitude()
+            // }, 100)
             setInterval(() => {
                 if (this.onStddev(this.temporaryData.x) < 2 && this.onStddev(this.temporaryData.y) < 2) {
                     console.log(this.wheelAngle)

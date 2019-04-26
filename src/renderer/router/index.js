@@ -8,17 +8,26 @@ export default new Router({
     {
       path: '/',
       name: 'index',
-      component: require('@/pages/index').default
+      component: require('@/pages/index').default,
+      meta: {
+        keepAlive: false // 不需要被缓存
+      }
     },
     {
       path: '/usermode/index',
       name: 'usermode',
-      component: require('@/pages/usermode/index').default
+      component: require('@/pages/usermode/index').default,
+      meta: {
+        keepAlive: false // 不需要被缓存
+      }
     },
     {
       path: '/calibrationmodel/index',
       name: 'calibrationmodel',
-      component: require('@/pages/calibrationmodel/index').default
+      component: require('@/pages/calibrationmodel/index').default,
+      meta: {
+        keepAlive: false // 不需要被缓存
+      }
     },
     {
       path: '*',

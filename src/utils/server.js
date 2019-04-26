@@ -25,7 +25,7 @@ server.on('message', function (message, remote) {
       //   event.sender.send('is_initialize-reply', obj)
       // })
 
-      mainWindow.webContents.send('is_initialize-reply', obj)
+      // mainWindow.webContents.send('is_initialize-reply', obj)
       break
   }
 })
