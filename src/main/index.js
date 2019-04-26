@@ -153,6 +153,11 @@ ipcMain.on('finish_initialize', (event, file) => {
     console.log(e)
   })
 })
+ipcMain.on('runtime_para', (event, file) => {
+  client.runtimePara().catch(e => {
+    console.log(e)
+  })
+})
 
 // ipcMain.on('sendMessage', (event, file) => {
 //   require('../utils/client')
