@@ -108,6 +108,9 @@ const Server = () => {
         case 'vehicle_attitude':
           mainWindow.webContents.send('vehicle_attitude-reply', obj)
           break
+        case 'finish_initialize':
+          mainWindow.webContents.send('finish_initialize-reply', obj)
+          break
       }
     }
   })
@@ -142,6 +145,11 @@ ipcMain.on('view_layer2', (event, file) => {
 })
 ipcMain.on('vehicle_attitude', (event, file) => {
   client.vehicleAttitude().catch(e => {
+    console.log(e)
+  })
+})
+ipcMain.on('finish_initialize', (event, file) => {
+  client.finishInitialize().catch(e => {
     console.log(e)
   })
 })

@@ -391,7 +391,24 @@
                         }
                     }
                 } else {
-
+                    this.$message({
+                        message: args.message,
+                        type: 'success'
+                    })
+                }
+            })
+            /*
+            * 完成初始化
+            * */
+            ipcRenderer.on('finish_initialize-reply', (event, args) => {
+                if (args.success) {
+                    console.log(args)
+                    this.$router.push('/usermode/index')
+                } else {
+                    this.$message({
+                        message: args.message,
+                        type: 'success'
+                    })
                 }
             })
         },
@@ -547,7 +564,7 @@
                 }, true)
             },
             onSaveSettings () {
-                this.$router.push('/usermode/index')
+                ipcRenderer.send('finish_initialize')
             },
             onRefreshViewLayerData () {
                 // 视角

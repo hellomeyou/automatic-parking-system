@@ -152,6 +152,17 @@ const vehicleAttitude = () => {
     })
   })
 }
+const finishInitialize = () => {
+  return new Promise(resolve => {
+    const message = Buffer.from(`POST:finish_initialize = 1`)
+    client.send(message, PORT, HOST, function (err, bytes) {
+      if (err) throw err
+      console.log('UDP message sent to ' + HOST + ':' + PORT)
+      resolve()
+      // client.close()
+    })
+  })
+}
 
 export default {
   isInitialize,
@@ -160,5 +171,6 @@ export default {
   parkingSide,
   heightFromTheGround,
   viewLayer,
-  vehicleAttitude
+  vehicleAttitude,
+  finishInitialize
 }
