@@ -126,9 +126,11 @@
                         y: data.car_center.y / 10
                     }
 
+                    // 车体旋转角度后高（宽）
+                    const angkeHeight = data.car_length / 10 * Math.cos(data.car_angle / 1000) + data.car_width / 10 * Math.sin(data.car_angle / 1000)
                     this.carPosition = {
                         x: data.car_center.x / 10 - data.car_length / 10 / 2,
-                        y: data.car_center.y / 10 - data.car_width / 10 / 2
+                        y: data.car_center.y / 10 - angkeHeight / 2
                     }
                     console.log(this.carPosition)
                     this.LeftFrontWheelDegree = -data.left_front_wheel_angle / 1000 - -data.car_angle / 1000
@@ -150,20 +152,14 @@
             setInterval(() => {
                 console.log(this.temporaryData)
                 if (this.onStddev(this.temporaryData.x) < 2 && this.onStddev(this.temporaryData.y) < 2) {
-                    console.log(this.wheelAngle)
+                    const frontWheelDegree = (Math.abs(this.LeftFrontWheelDegree) + Math.abs(this.RightFrontWheelDegree)) / 2
                     if (this.carPosition.x - this.beforeEndline < 0 || (this.carPosition.y < this.leftEndline || (parseInt(this.carPosition.y) + parseInt(this.carWidth)) > this.rightEndline)) {
                         this.stopStatusMessage = '请将车停在停车区域内'
-                    } else if (Math.abs(this.LeftFrontWheelDegree) > this.wheelAngle) {
-                        if (this.LeftFrontWheelDegree < 0) {
-                            this.stopStatusMessage = '请将左前轮向右打正'
-                        } else if (this.LeftFrontWheelDegree > 0) {
-                            this.stopStatusMessage = '请将左前轮向左打正'
-                        }
-                    } else if (Math.abs(this.RightFrontWheelDegree) > this.wheelAngle) {
-                        if (this.RightFrontWheelDegree < 0) {
-                            this.stopStatusMessage = '请将右前轮向右打正'
-                        } else if (this.RightFrontWheelDegree > 0) {
-                            this.stopStatusMessage = '请将左右轮向左打正'
+                    } else if (frontWheelDegree > this.wheelAngle) {
+                        if (this.LeftFrontWheelDegree + this.RightFrontWheelDegree < 0) {
+                            this.stopStatusMessage = '请将前轮向右打正'
+                        } else if (this.LeftFrontWheelDegree + this.RightFrontWheelDegreea > 0) {
+                            this.stopStatusMessage = '请将前轮向左打正'
                         }
                     } else {
                         this.stopStatusMessage = '请下车'
