@@ -33,6 +33,7 @@ function createWindow () {
     darkTheme: true
     // resizable: false
   })
+  mainWindow.maximize()
 
   mainWindow.loadURL(winURL)
 
@@ -121,7 +122,7 @@ const Server = () => {
 Server()
 
 ipcMain.once('is_initialize', async (event, file) => {
-  Promise.all([client.isInitialize(), client.runtimePara()]).catch(res => {
+  client.isInitialize().catch(res => {
     console.log(res)
   })
 })

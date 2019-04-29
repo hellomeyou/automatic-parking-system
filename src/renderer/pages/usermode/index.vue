@@ -1,20 +1,24 @@
 <template lang="pug">
     .usermode
-        router-link.usermode(to="/") 校准模式
-        .title 测量模式
-        .status
-            span(v-html="frontStatusMessage")
-        .status
-            span(v-html="sideLeftStatusMessage")
-            span(v-if="sideLeftStatusMessage && sideRightStatusMessage") ,
-            span(v-html="sideRightStatusMessage")
-        .status
-            span(v-html="stopStatusMessage")
+        .box
+            router-link.usermode(to="/calibrationmodel/index") 校准模式
+            .title 测量模式
+            .status
+                span(v-html="frontStatusMessage")
+            .status
+                span(v-html="sideLeftStatusMessage")
+                span(v-if="sideLeftStatusMessage && sideRightStatusMessage") ,
+                span(v-html="sideRightStatusMessage")
+            .status
+                span(v-html="stopStatusMessage")
         .usermode__main
             .car.garage(:style="{width: garage.length + 'px', height: garage.height + 'px'}")
                 .point(:style="{top: garage.height - carCenter.y + 'px', left: garage.length - carCenter.x + 'px'}")
-                .stopline(:style="{width: targetArea.length + 'px', height: targetArea.height + 'px', top: leftEndline + 'px', left: beforeEndline + 'px'}")
-                <!--.car__main(:style="{'transform': 'rotate(' + carDegree + 'deg)', bottom: carPosition.y + 'px', left: carPosition.x + 'px' }")-->
+                .stopline(:style="{width: targetArea.length + 20 + 'px', height: targetArea.height + 20 + 'px', top: leftEndline - 10 + 'px', left: beforeEndline - 10 + 'px'}")
+                    .line.stopline__top(:class="{borderColor: sideRightStatusMessage}") 
+                    .line.stopline__left(:class="{borderColor: frontStatusMessage}") 
+                    .line.stopline__bottom(:class="{borderColor: sideLeftStatusMessage}")   
+                    .line.stopline__right 
                 .car__main(:style="{width: carHeight + 'px', height: carWidth + 'px', 'transform': 'translate('+ carPosition.x + 'px, ' + (garage.height - carWidth - carPosition.y) + 'px) rotate(' + carDegree + 'deg)'}")
                     .car__LeftFrontWheel.car--wheel(:style="{'transform': 'rotate(' + LeftFrontWheelDegree + 'deg)'}")
                     .car__RightFrontWheel.car--wheel(:style="{'transform': 'rotate(' + RightFrontWheelDegree + 'deg)'}")
@@ -65,34 +69,67 @@
                     y: []
                 },
 
-                angleHeight: ''
+                angleHeight: '',
+                vehicleAttitudeTimer: 0,
+                stopStatusTimer: 0,
+
+                widthCoefficient: 1,
+                heightCoefficient: 1
             }
         },
         created () {
             // 切换模式
             ipcRenderer.send('runtime_mode', 3)
+            ipcRenderer.on('runtime_mode-reply', (event, args) => {
+                if (args.success) {
+                    ipcRenderer.send('runtime_para')
+                } else {
+                    this.$message({
+                        message: args.message,
+                        type: 'success'
+                    })
+                }
+            })
             ipcRenderer.on('runtime_para-reply', (event, args) => {
                 console.log(args)
+                console.log('屏幕高度' + document.body.clientHeight)
+                console.log('屏幕宽度' + document.body.clientWidth)
                 if (args.success) {
                     const data = args.data
+                    this.widthCoefficient = document.body.clientHeight * data.parking_x / data.parking_y / (data.parking_x / 10)
+                    this.heightCoefficient = document.body.clientHeight / (data.parking_y / 10)
+                    // this.garageCenter = {
+                    //     x: data.parking_x / 10 / 2,
+                    //     y: data.parking_y / 10 / 2
+                    // }
                     this.garageCenter = {
-                        x: data.parking_x / 10 / 2,
-                        y: data.parking_y / 10 / 2
+                        x: document.body.clientHeight * data.parking_x / data.parking_y / 2,
+                        y: document.body.clientHeight / 2
                     }
 
+                    // this.garage = {
+                    //     length: data.parking_x / 10,
+                    //     height: data.parking_y / 10
+                    // }
+
                     this.garage = {
-                        length: data.parking_x / 10,
-                        height: data.parking_y / 10
+                        length: document.body.clientHeight * data.parking_x / data.parking_y,
+                        height: document.body.clientHeight
                     }
+
+                    console.log(this.widthCoefficient)
                     console.log(this.garage)
                     this.targetArea = {
-                        length: data.target_x / 10,
-                        height: data.target_y / 10
+                        length: data.target_x / 10 * this.widthCoefficient,
+                        height: data.target_y / 10 * this.heightCoefficient
                     }
+                    console.log(this.targetArea)
+                    console.log(this.widthCoefficient)
+                    console.log(this.heightCoefficient)
                     this.wheelAngle = data.wheel_angle
-                    this.beforeEndline = (data.parking_x - data.target_x) / 10 / 2
-                    this.leftEndline = (data.parking_y - data.target_y) / 10 / 2
-                    this.rightEndline = (data.parking_y - (data.parking_y - data.target_y) / 2) / 10
+                    this.beforeEndline = (data.parking_x - data.target_x) / 10 / 2 * this.widthCoefficient
+                    this.leftEndline = (data.parking_y - data.target_y) / 10 / 2 * this.heightCoefficient
+                    this.rightEndline = (data.parking_y - (data.parking_y - data.target_y) / 2) / 10 * this.heightCoefficient
 
                     this.onVehicleAttitude()
                 } else {
@@ -122,19 +159,22 @@
                     console.log(args.data)
                     const data = args.data
                     this.carDegree = -data.car_angle / 1000
-                    this.carWidth = data.car_width / 10
-                    this.carHeight = data.car_length / 10
+                    this.carWidth = data.car_width / 10 * this.widthCoefficient
+                    this.carHeight = data.car_length / 10 * this.heightCoefficient
                     this.carCenter = {
-                        x: data.car_center.x / 10,
-                        y: data.car_center.y / 10
+                        x: data.car_center.x / 10 * this.widthCoefficient,
+                        y: data.car_center.y / 10 * this.heightCoefficient
                     }
 
                     // 车体旋转角度后高（宽）
-                    this.angleHeight = (data.car_length * Math.sin(data.car_angle / 1000 * Math.PI / 180) + data.car_width * Math.cos(data.car_angle / 1000 * Math.PI / 180)) / 10
+                    console.log(this.widthCoefficient)
+                    console.log(this.heightCoefficient)
+                    this.angleHeight = data.car_length / 10 * this.widthCoefficient * Math.sin(Math.abs(data.car_angle / 1000) * Math.PI / 180) + data.car_width / 10 * this.heightCoefficient * Math.cos(Math.abs(data.car_angle / 1000) * Math.PI / 180)
 
+                    console.log(this.angleHeight)
                     this.carPosition = {
-                        x: data.car_center.x / 10 - data.car_length / 10 / 2,
-                        y: data.car_center.y / 10 - data.car_width / 10 / 2
+                        x: (data.car_center.x - data.car_length / 2) / 10 * this.widthCoefficient,
+                        y: (data.car_center.y - data.car_width / 2) / 10 * this.heightCoefficient
                     }
                     console.log(this.carPosition)
                     console.log(this.garage.height)
@@ -152,41 +192,34 @@
                     })
                 }
             })
-            setInterval(() => {
-                this.onVehicleAttitude()
-            }, 100)
-            setInterval(() => {
-                console.log(this.temporaryData)
-                if (this.onStddev(this.temporaryData.x) < 2 && this.onStddev(this.temporaryData.y) < 2) {
-                    const frontWheelDegree = (Math.abs(this.LeftFrontWheelDegree) + Math.abs(this.RightFrontWheelDegree)) / 2
-                    if (this.carPosition.x - this.beforeEndline < 0 || (this.carCenter.y - this.angleHeight / 2 < this.leftEndline || parseInt(this.carCenter.y) + parseInt(this.angleHeight / 2) > this.rightEndline)) {
-                        this.stopStatusMessage = '请将车停在停车区域内'
-                    } else if (frontWheelDegree > this.wheelAngle) {
-                        if (this.LeftFrontWheelDegree + this.RightFrontWheelDegree < 0) {
-                            this.stopStatusMessage = '请将前轮向右打正'
-                        } else if (this.LeftFrontWheelDegree + this.RightFrontWheelDegreea > 0) {
-                            this.stopStatusMessage = '请将前轮向左打正'
-                        }
-                    } else {
-                        this.stopStatusMessage = '请下车'
-                    }
-                } else {
-                    console.log('运动状态')
-                }
-                this.temporaryData = {
-                    x: [],
-                    y: []
-                }
-            }, 3000)
+            // this.vehicleAttitudeTimer = setInterval(() => {
+            //     this.onVehicleAttitude()
+            // }, 100)
+            // this.stopStatusTimer = setInterval(() => {
+            //     console.log(this.temporaryData)
+            //     if (this.onStddev(this.temporaryData.x) < 2 && this.onStddev(this.temporaryData.y) < 2) {
+            //         const frontWheelDegree = (Math.abs(this.LeftFrontWheelDegree) + Math.abs(this.RightFrontWheelDegree)) / 2
+            //         if (this.carPosition.x - this.beforeEndline < 0 || (this.carCenter.y - this.angleHeight / 2 < this.leftEndline || parseInt(this.carCenter.y) + parseInt(this.angleHeight / 2) > this.rightEndline)) {
+            //             this.stopStatusMessage = '请将车停在停车区域内'
+            //         } else if (frontWheelDegree > this.wheelAngle) {
+            //             if (this.LeftFrontWheelDegree + this.RightFrontWheelDegree < 0) {
+            //                 this.stopStatusMessage = '请将前轮向右打正'
+            //             } else if (this.LeftFrontWheelDegree + this.RightFrontWheelDegreea > 0) {
+            //                 this.stopStatusMessage = '请将前轮向左打正'
+            //             }
+            //         } else {
+            //             this.stopStatusMessage = '请下车'
+            //         }
+            //     } else {
+            //         console.log('运动状态')
+            //     }
+            //     this.temporaryData = {
+            //         x: [],
+            //         y: []
+            //     }
+            // }, 3000)
         },
-        mounted () {
-            /*
-            *  重新请求当前车库标准
-            * */
-            if (!this.garageCenter.x && !this.garageCenter.y) {
-                ipcRenderer.send('runtime_para')
-            }
-        },
+        mounted () {},
         watch: {
             'carCenter.x': {
                 handler (newName, oldName) {
@@ -199,13 +232,14 @@
                         this.frontStatusMessage = `<span style="color: orange">请继续驶入</span>`
                     } else if (this.carPosition.x - this.beforeEndline < 150) {
                         const level = this.carPosition.x - this.beforeEndline
+                        // const distance = this.carPosition.x - beforeEndline - this.targetArea.x
                         switch (true) {
-                            case level >= 50:
-                                this.frontStatusMessage = `距离前端线<span style="color: orange">${(level / 100).toFixed(2)}</span>米`
-                                break
-                            case level >= 0:
-                                this.frontStatusMessage = `距离前端线<span style="color: green">${(level / 100).toFixed(2)}</span>米`
-                                break
+                            // case level >= 50:
+                            //     this.frontStatusMessage = `距离前端线<span style="color: orange">${(level / 100).toFixed(2)}</span>米`
+                            //     break
+                            // case level >= 0:
+                            //     this.frontStatusMessage = `距离前端线<span style="color: green">${(level / 100).toFixed(2)}</span>米`
+                            //     break
                             case level < 0:
                                 this.frontStatusMessage = `您已经超出前端线<span style="color: red">${Math.abs(parseFloat(level / 100)).toFixed(2)}</span>米`
                                 break
@@ -259,6 +293,10 @@
 
                 return Math.sqrt(deviations.map(square).reduce(sum) / (data.length - 1))
             }
+        },
+        destroyed () {
+            clearInterval(this.vehicleAttitudeTimer)
+            clearInterval(this.stopStatusTimer)
         }
     }
 </script>
@@ -275,35 +313,71 @@
             color: rgba(#fff, 0.6);
         }
         .status {
-            height: 40px;
-            margin: 20px 0;
-            font-size: 30px;
+            // height: 40px;
+            // margin: 20px 0;
+            // font-size: 30px;
             text-align: center;
             color: rgba(#fff, 0.6);
         }
         &__main {
             display: flex;
-            justify-content: center;
+            justify-content: flex-end;
             .car {
                 /*width: 700px;*/
                 /*height: 400px;*/
                 background-color: grey;
                 position: relative;
                 .stopline {
-                    border: 1px dashed red;
-                    /*width: 560px;*/
-                    /*height: 260px;*/
+                    background-color: green;
                     position: absolute;
-                    /*top: 70px;*/
-                    /*left: 70px;*/
+                    .line {
+                        position: absolute;
+                        // transition: background-color 0.3s linear;
+                        &.borderColor {
+                            z-index: 100;
+                            animation: borderColor 0.5s linear infinite;
+                        }
+                    }
+                    &__left {
+                        left: 0;
+                        top: 0;
+                        // width: 10px;
+                        height: 100%;
+                        // background-color: red;
+                        border-left: 10px dashed green;
+                    }
+                    &__right {
+                        right: 0;
+                        top: 0;
+                        // width: 10px;
+                        height: 100%;
+                        // background-color: red;
+                        border-right: 10px dashed green;
+                    }
+                    &__top {
+                        left: 0;
+                        top: 0;
+                        // height: 10px;
+                        width: 100%;
+                        // background-color: red;
+                        border-top: 10px dashed green;
+                    }
+                    &__bottom {
+                        left: 0;
+                        bottom: 0;
+                        // height: 10px;
+                        width: 100%;
+                        // background-color: red;
+                        border-bottom: 10px dashed green;
+                    }
                 }
                 &__main {
                     position: absolute;
-                    height: 174.7px;
-                    width: 448.6px;
+                    // height: 174.7px;
+                    // width: 448.6px;
                     background-color: #ffffff;
                     transform-origin: center;
-                    transition: transform 0.3s linear;
+                    // transition: transform 0.3s linear;
                     .car--wheel {
                         position: absolute;
                         height: 20px;
@@ -338,5 +412,20 @@
         background: black;
         z-index: 100;
         position: absolute;
+    }
+    @keyframes borderColor {
+        0% {
+            border-color: red;
+        }
+        100% {
+            // background-color: #fff;
+            border-color: #fff;
+        }
+    }
+    .box {
+        position: absolute;
+        top: 75%;
+        transform: translate(0, 0) rotate(-90deg);
+        transform-origin: left top;
     }
 </style>

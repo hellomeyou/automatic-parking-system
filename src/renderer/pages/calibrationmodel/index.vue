@@ -225,15 +225,26 @@
             }
         },
         created () {
+            ipcRenderer.send('runtime_mode', 1)
+            ipcRenderer.on('runtime_mode-reply', (event, args) => {
+                if (args.success) {
+                    ipcRenderer.send('runtime_para')
+                } else {
+                    this.$message({
+                        message: args.message,
+                        type: 'success'
+                    })
+                }
+            })
             ipcRenderer.on('runtime_para-reply', (event, args) => {
                 console.log(args)
                 if (args.success) {
                     this.calibrationError = args.data
                     for (let item in args.data) {
-                        if (!args.data[item]) {
+                        if (!args.data[item] && args.data[item] !== 0) {
                             this.$message({
                                 message: `${item}数据不正常，"${item}:${args.data[item]}"`,
-                                type: 'success'
+                                type: 'warning'
                             })
                         }
                     }
@@ -244,18 +255,6 @@
                     })
                 }
             })
-            ipcRenderer.send('runtime_mode', 1)
-            ipcRenderer.on('runtime_mode-reply', (event, args) => {
-                if (args.success) {
-                    console.log(args)
-                } else {
-                    this.$message({
-                        message: args.message,
-                        type: 'success'
-                    })
-                }
-            })
-
             ipcRenderer.on('view_layer2-reply', (event, args) => {
                 if (args.success) {
                     console.log(args)
@@ -391,24 +390,7 @@
                         }
                     }
                 } else {
-                    this.$message({
-                        message: args.message,
-                        type: 'success'
-                    })
-                }
-            })
-            /*
-            * 完成初始化
-            * */
-            ipcRenderer.on('finish_initialize-reply', (event, args) => {
-                if (args.success) {
-                    console.log(args)
-                    this.$router.push('/usermode/index')
-                } else {
-                    this.$message({
-                        message: args.message,
-                        type: 'success'
-                    })
+
                 }
             })
         },
@@ -564,7 +546,7 @@
                 }, true)
             },
             onSaveSettings () {
-                ipcRenderer.send('finish_initialize')
+                this.$router.push('/usermode/index')
             },
             onRefreshViewLayerData () {
                 // 视角
