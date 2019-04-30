@@ -1,16 +1,19 @@
 <template lang="pug">
     .usermode
-        .box
-            router-link.usermode(to="/calibrationmodel/index") 校准模式
-            .title 测量模式
-            .status
-                span(v-html="frontStatusMessage")
+        .box(:style="{width: garage.height + 'px'}")
+            //- router-link.usermode(to="/calibrationmodel/index") 校准模式
+            a(@click="onJumpCalibrationModel") 校准模式
+            .status(style="height: 48px;line-height: 48px; font-size: 24px;")
+                span(v-html="behandStatusMessage")
+                span(v-html="statusMessage")
             .status
                 span(v-html="sideLeftStatusMessage")
-                span(v-if="sideLeftStatusMessage && sideRightStatusMessage") ,
+                span(v-if="sideLeftStatusMessage && sideRightStatusMessage") ，
                 span(v-html="sideRightStatusMessage")
-            .status
-                span(v-html="stopStatusMessage")
+                span(v-if="(sideLeftStatusMessage && sideRightStatusMessage) && frontStatusMessage") ，
+                span(v-html="frontStatusMessage")
+            //- .status
+            //-     span(v-html="stopStatusMessage")
         .usermode__main
             .car.garage(:style="{width: garage.length + 'px', height: garage.height + 'px'}")
                 .point(:style="{top: garage.height - carCenter.y + 'px', left: garage.length - carCenter.x + 'px'}")
@@ -18,12 +21,16 @@
                     .line.stopline__top(:class="{borderColor: sideRightStatusMessage}") 
                     .line.stopline__left(:class="{borderColor: frontStatusMessage}") 
                     .line.stopline__bottom(:class="{borderColor: sideLeftStatusMessage}")   
-                    .line.stopline__right 
+                    .line.stopline__right(:class="{borderColor: behandStatusMessage}") 
                 .car__main(:style="{width: carHeight + 'px', height: carWidth + 'px', 'transform': 'translate('+ carPosition.x + 'px, ' + (garage.height - carWidth - carPosition.y) + 'px) rotate(' + carDegree + 'deg)'}")
-                    .car__LeftFrontWheel.car--wheel(:style="{'transform': 'rotate(' + LeftFrontWheelDegree + 'deg)'}")
-                    .car__RightFrontWheel.car--wheel(:style="{'transform': 'rotate(' + RightFrontWheelDegree + 'deg)'}")
-                    .car__LeftRearWheel.car--wheel
-                    .car__RightRearWheel.car--wheel
+                    div(v-if="wheel2front !== 0")
+                        .car__LeftFrontWheel.car--wheel(:style="{left: wheel2front, 'transform': 'rotate(' + LeftFrontWheelDegree + 'deg)'}")
+                            div(:class="{leftRotate: leftRotate, rightRotate: rightRotate}")
+                        .car__RightFrontWheel.car--wheel(:style="{left: wheel2front, 'transform': 'rotate(' + RightFrontWheelDegree + 'deg)'}")
+                            div(:class="{leftRotate: leftRotate, rightRotate: rightRotate}")
+                    div(v-if="wheel2behind !== 0")
+                        .car__LeftRearWheel.car--wheel(:style="{right: wheel2behind}")
+                        .car__RightRearWheel.car--wheel(:style="{right: wheel2behind}")
 </template>
 
 <script>
@@ -62,7 +69,8 @@
                 frontStatusMessage: '',
                 sideLeftStatusMessage: '',
                 sideRightStatusMessage: '',
-                stopStatusMessage: '',
+                statusMessage: '',
+                behandStatusMessage: '',
 
                 temporaryData: {
                     x: [],
@@ -74,13 +82,20 @@
                 stopStatusTimer: 0,
 
                 widthCoefficient: 1,
-                heightCoefficient: 1
+                heightCoefficient: 1,
+
+                wheel2front: 0,
+                wheel2behind: 0,
+                vehicleStandard: false,
+                wheelStandard: false,
+                leftRotate: false,
+                rightRotate: false
             }
         },
         created () {
             // 切换模式
             ipcRenderer.send('runtime_mode', 3)
-            ipcRenderer.on('runtime_mode-reply', (event, args) => {
+            ipcRenderer.once('runtime_mode-reply', (event, args) => {
                 if (args.success) {
                     ipcRenderer.send('runtime_para')
                 } else {
@@ -90,7 +105,7 @@
                     })
                 }
             })
-            ipcRenderer.on('runtime_para-reply', (event, args) => {
+            ipcRenderer.once('runtime_para-reply', (event, args) => {
                 console.log(args)
                 console.log('屏幕高度' + document.body.clientHeight)
                 console.log('屏幕宽度' + document.body.clientWidth)
@@ -140,7 +155,7 @@
                 }
             })
 
-            ipcRenderer.on('vehicle_attitude-reply', (event, args) => {
+            ipcRenderer.on('vehicle_attitude-reply', async (event, args) => {
                 // {
                 //     car_length: 4600,
                 //     car_width: 1800,
@@ -165,6 +180,8 @@
                         x: data.car_center.x / 10 * this.widthCoefficient,
                         y: data.car_center.y / 10 * this.heightCoefficient
                     }
+                    this.wheel2front = data.wheel2front
+                    this.wheel2behind = data.wheel2behind
 
                     // 车体旋转角度后高（宽）
                     console.log(this.widthCoefficient)
@@ -185,16 +202,21 @@
 
                     this.temporaryData.x.push(data.car_center.x)
                     this.temporaryData.y.push(data.car_center.y)
+                    await this.onListenVehicleStandard()
+                    await this.onListenSideVehicleStandard()
+                    if (this.vehicleStandard) {
+                        this.onListenWheelStandard(-data.left_front_wheel_angle / 1000, -data.right_front_wheel_angle / 1000)
+                    }
                 } else {
                     this.$message({
                         message: args.message,
-                        type: 'success'
+                        type: 'warning'
                     })
                 }
             })
-            // this.vehicleAttitudeTimer = setInterval(() => {
-            //     this.onVehicleAttitude()
-            // }, 100)
+            this.vehicleAttitudeTimer = setInterval(() => {
+                this.onVehicleAttitude()
+            }, 100)
             // this.stopStatusTimer = setInterval(() => {
             //     console.log(this.temporaryData)
             //     if (this.onStddev(this.temporaryData.x) < 2 && this.onStddev(this.temporaryData.y) < 2) {
@@ -220,65 +242,7 @@
             // }, 3000)
         },
         mounted () {},
-        watch: {
-            'carCenter.x': {
-                handler (newName, oldName) {
-                    // this.carPosition = {
-                    //     ...this.carPosition,
-                    //     x: this.carCenter.x - this.carHeight / 2
-                    // }
-                    console.log(this.carPosition.x - this.beforeEndline)
-                    if (this.carPosition.x - this.beforeEndline > 150) {
-                        this.frontStatusMessage = `<span style="color: orange">请继续驶入</span>`
-                    } else if (this.carPosition.x - this.beforeEndline < 150) {
-                        const level = this.carPosition.x - this.beforeEndline
-                        // const distance = this.carPosition.x - beforeEndline - this.targetArea.x
-                        switch (true) {
-                            // case level >= 50:
-                            //     this.frontStatusMessage = `距离前端线<span style="color: orange">${(level / 100).toFixed(2)}</span>米`
-                            //     break
-                            // case level >= 0:
-                            //     this.frontStatusMessage = `距离前端线<span style="color: green">${(level / 100).toFixed(2)}</span>米`
-                            //     break
-                            case level < 0:
-                                this.frontStatusMessage = `您已经超出前端线<span style="color: red">${Math.abs(parseFloat(level / 100)).toFixed(2)}</span>米`
-                                break
-                        }
-                    } else {
-                        this.frontStatusMessage = ''
-                    }
-                },
-                immediate: true
-            },
-            'carCenter.y': {
-                handler (newName, oldName) {
-                    // this.carPosition = {
-                    //     ...this.carPosition,
-                    //     y: newName - this.carWidth / 2
-                    // }
-                    const distance = parseInt(this.carCenter.y) + parseInt(this.angleHeight / 2)
-                    console.log(`距左距离:${distance}`)
-                    console.log(distance - this.rightEndline)
-                    console.log(this.carCenter.y)
-                    console.log(this.angleHeight / 2)
-                    console.log(this.carCenter.y - this.angleHeight / 2)
-                    console.log(this.leftEndline)
-                    if (this.carCenter.y - this.angleHeight / 2 < this.leftEndline) {
-                        const beyondDistance = (this.carCenter.y - this.angleHeight / 2) - this.leftEndline
-                        this.sideLeftStatusMessage = `您已经超出左端线<span style="color: red">${Math.abs(parseFloat(beyondDistance / 100)).toFixed(2)}</span>米`
-                    } else {
-                        this.sideLeftStatusMessage = ''
-                    }
-                    if (distance > this.rightEndline) {
-                        const beyondDistance = distance - this.rightEndline
-                        this.sideRightStatusMessage = `您已经超出右端线<span style="color: red">${Math.abs(parseFloat(beyondDistance / 100)).toFixed(2)}</span>米`
-                    } else {
-                        this.sideRightStatusMessage = ''
-                    }
-                },
-                immediate: true
-            }
-        },
+        watch: {},
         methods: {
             onVehicleAttitude () {
                 ipcRenderer.send('vehicle_attitude')
@@ -292,11 +256,98 @@
                 const deviations = data.map(function (x) { return x - mean })
 
                 return Math.sqrt(deviations.map(square).reduce(sum) / (data.length - 1))
+            },
+            // 检测车态标准
+            onListenVehicleStandard () {
+                return new Promise(resolve => {
+                    if (this.carPosition.x - this.beforeEndline > 150 * this.widthCoefficient) {
+                        this.behandStatusMessage = `<span style="color: orange">请继续驶入</span>`
+                        this.statusMessage = '<span style="color: red">车身已压线</span>'
+                        this.vehicleStandard = false
+                    } else if (this.carPosition.x - this.beforeEndline < 150 * this.widthCoefficient) {
+                        const level = this.carPosition.x - this.beforeEndline
+                        switch (true) {
+                            case level < 0:
+                                this.frontStatusMessage = `您已经超出前端线<span style="color: red">${Math.abs((parseFloat(level / 100)) / this.widthCoefficient).toFixed(2)}</span>米`
+                                this.vehicleStandard = false
+                                this.statusMessage = '<span style="color: red">车身已压线</span>'
+                                break
+                        }
+                    } else {
+                        this.vehicleStandard = true
+                        this.frontStatusMessage = ''
+                        this.statusMessage = ''
+                    }
+                    resolve()
+                })
+            },
+            onListenSideVehicleStandard () {
+                return new Promise(resolve => {
+                    const distance = parseInt(this.carCenter.y) + parseInt(this.angleHeight / 2)
+                    if (this.carCenter.y - this.angleHeight / 2 < this.leftEndline) {
+                        const beyondDistance = ((this.carCenter.y - this.angleHeight / 2) - this.leftEndline) / this.heightCoefficient
+                        this.sideLeftStatusMessage = `您已经超出左端线<span style="color: red">${Math.abs(parseFloat(beyondDistance / 100)).toFixed(2)}</span>米`
+                        this.vehicleStandard = false
+                        this.statusMessage = '<span style="color: red">车身已压线</span>'
+                    } else {
+                        this.vehicleStandard = true
+                        this.sideLeftStatusMessage = ''
+                        this.statusMessage = ''
+                    }
+                    if (distance > this.rightEndline) {
+                        const beyondDistance = (distance - this.rightEndline) / this.heightCoefficient
+                        this.sideRightStatusMessage = `您已经超出右端线<span style="color: red">${Math.abs(parseFloat(beyondDistance / 100)).toFixed(2)}</span>米`
+                        this.vehicleStandard = false
+                        this.statusMessage = '<span style="color: red">车身已压线</span>'
+                    } else {
+                        this.vehicleStandard = true
+                        this.sideRightStatusMessage = ''
+                        this.statusMessage = ''
+                    }
+                    resolve()
+                })
+            },
+            // 检测车轮标准
+            onListenWheelStandard (leftAngle, rightAngle) {
+                return new Promise(resolve => {
+                    const frontWheelDegree = (Math.abs(this.LeftFrontWheelDegree) + Math.abs(this.RightFrontWheelDegree)) / 2
+                    console.log('车轮角度' + frontWheelDegree)
+                    console.log(this.LeftFrontWheelDegree)
+                    console.log(this.RightFrontWheelDegree)
+                    console.log(this.carDegree)
+                    console.log((Math.abs(this.LeftFrontWheelDegree) + Math.abs(this.RightFrontWheelDegree)) / 2)
+                    if (frontWheelDegree > this.wheelAngle) {
+                        if (leftAngle + rightAngle < 0) {
+                            this.rightRotate = true
+                            this.leftRotate = false
+                            this.statusMessage = '<span style="color: red">请将前轮向右打正</span>'
+                        } else if (leftAngle + rightAngle > 0) {
+                            this.leftRotate = true
+                            this.rightRotate = false
+                            this.statusMessage = '<span style="color: red">请将前轮向左打正</span>'
+                        }
+                    } else {
+                            this.rightRotate = false
+                            this.leftRotate = false
+                        this.statusMessage = '<span style="color: green">请下车</span>'
+                    }
+                    resolve()
+                })
+            },
+            onJumpCalibrationModel () {
+                ipcRenderer.removeAllListeners('vehicle_attitude')
+                ipcRenderer.removeAllListeners('vehicle_attitude-reply')
+                ipcRenderer.removeAllListeners('runtime_para')
+                ipcRenderer.removeAllListeners('runtime_para-reply')
+                ipcRenderer.removeAllListeners('runtime_mode')
+                ipcRenderer.removeAllListeners('runtime_mode-reply')
+                this.$router.push('/calibrationmodel/index')
             }
         },
         destroyed () {
+            console.log('销毁了')
             clearInterval(this.vehicleAttitudeTimer)
-            clearInterval(this.stopStatusTimer)
+            // clearInterval(this.stopStatusTimer)
         }
     }
 </script>
@@ -323,12 +374,13 @@
             display: flex;
             justify-content: flex-end;
             .car {
+                overflow: hidden;
                 /*width: 700px;*/
                 /*height: 400px;*/
-                background-color: grey;
+                background-color: #53caee;
                 position: relative;
                 .stopline {
-                    background-color: green;
+                    background-color: #00b460;
                     position: absolute;
                     .line {
                         position: absolute;
@@ -344,7 +396,7 @@
                         // width: 10px;
                         height: 100%;
                         // background-color: red;
-                        border-left: 10px dashed green;
+                        border-left: 10px dashed #00b460;
                     }
                     &__right {
                         right: 0;
@@ -352,7 +404,7 @@
                         // width: 10px;
                         height: 100%;
                         // background-color: red;
-                        border-right: 10px dashed green;
+                        border-right: 10px dashed #00b460;
                     }
                     &__top {
                         left: 0;
@@ -360,7 +412,7 @@
                         // height: 10px;
                         width: 100%;
                         // background-color: red;
-                        border-top: 10px dashed green;
+                        border-top: 10px dashed #00b460;
                     }
                     &__bottom {
                         left: 0;
@@ -368,21 +420,22 @@
                         // height: 10px;
                         width: 100%;
                         // background-color: red;
-                        border-bottom: 10px dashed green;
+                        border-bottom: 10px dashed #00b460;
                     }
                 }
                 &__main {
                     position: absolute;
                     // height: 174.7px;
                     // width: 448.6px;
-                    background-color: #ffffff;
+                    background-color: #ffea68;
                     transform-origin: center;
                     // transition: transform 0.3s linear;
                     .car--wheel {
                         position: absolute;
-                        height: 20px;
-                        width: 64.8px;
-                        background-color: red;
+                        height: 40px;
+                        width: 100px;
+                        border-radius: 10px;
+                        background-color: #000000;
                         transition: transform 0.3s linear;
                         /*transform-origin: left bottom;*/
                         &.car__LeftFrontWheel {
@@ -424,8 +477,38 @@
     }
     .box {
         position: absolute;
-        top: 75%;
+        top: 100%;
         transform: translate(0, 0) rotate(-90deg);
         transform-origin: left top;
+    }
+    .leftRotate {
+        width: 105px;
+        height: 110px;
+        position: absolute;
+        top: -46px;
+        transform: rotate(-5deg);
+        left: -80px;
+        background:  url('../../../../static/leftRotate.png') no-repeat;
+        animation: leftRotate 0.8s linear infinite;
+    }
+    @keyframes leftRotate {
+        100% {
+            background-image: none;
+        }
+    }
+    .rightRotate {
+        width: 123px;
+        height: 89px;
+        position: absolute;
+        top: -13px;
+        transform: rotate(-92deg);
+        left: -80px;
+        background:  url('../../../../static/rightRotate.png') no-repeat;
+        animation: rightRotate 0.8s linear infinite;
+    }
+    @keyframes rightRotate {
+        100% {
+            background-image: none;
+        }
     }
 </style>

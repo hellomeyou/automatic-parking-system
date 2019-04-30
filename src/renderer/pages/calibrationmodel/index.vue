@@ -1,17 +1,16 @@
 <template lang="pug">
     .index 校准模式
-        router-link.usermode(to="/") 首页
         .index__main
             .index__main--flex
                 .index__main--title 测量仪校准
                 el-form.demo-form-inline(:inline='true', :model='standard')
                     el-form-item(label='测量矩形长')
                         el-col.line(:span='24')
-                            el-input(v-model.number='standard.length', placeholder='请输入测量车库的长')
+                            el-input(v-model.number='standard.length', type="number", placeholder='请输入测量车库的长')
                                 template(slot="append") mm
                     el-form-item(label='测量矩形宽')
                         el-col.line(:span='24')
-                            el-input(v-model.number='standard.height', placeholder='请输入测量车库的宽')
+                            el-input(v-model.number='standard.height', type="number", placeholder='请输入测量车库的宽')
                                 template(slot="append") mm
                 el-form.demo-form-inline(:model='parkingSide')
                     el-form-item(label='1号测量值')
@@ -64,11 +63,15 @@
                         el-button(type='primary', @click='onLevelCalibration', :disabled="runtimeMode == 1 ? false : true") 测量水平校准
 
                 .index__main--title 水平参数校准
-                el-form.demo-form-inline(:inline='true', :model='standard')
-                    el-form-item(label='校准轮胎直径')
-                        el-col.line(:span='24')
-                            el-input(v-model.number='standard.diameter', placeholder='请输入校准轮胎直径')
-                                template(slot="append") mm
+                //- el-form.demo-form-inline(:inline='true')
+                //-     el-form-item(label='校准轮胎直径')
+                //-         el-col.line(:span='24')
+                //-             el-input(v-model.number='standard.diameter', placeholder='请输入校准轮胎直径')
+                //-                 template(slot="append") mm
+                div(style="margin-bottom: 20px;")
+                    span 校准轮胎直径
+                    el-input(style="width: 200px;margin-left:20px;", type="number", v-model.number='standard.diameter', placeholder='请输入校准轮胎直径')
+                    //- input(v-model.number='standard.diameter', placeholder='请输入校准轮胎直径')
                 el-form.demo-form-inline(:model='formInit')
                     el-form-item(label="一号轮胎高度")
                         el-row( :gutter="20")
@@ -226,7 +229,7 @@
         },
         created () {
             ipcRenderer.send('runtime_mode', 1)
-            ipcRenderer.on('runtime_mode-reply', (event, args) => {
+            ipcRenderer.once('runtime_mode-reply', (event, args) => {
                 if (args.success) {
                     ipcRenderer.send('runtime_para')
                 } else {
@@ -236,7 +239,8 @@
                     })
                 }
             })
-            ipcRenderer.on('runtime_para-reply', (event, args) => {
+            ipcRenderer.once('runtime_para-reply', (event, args) => {
+                console.log('runtime_para-reply')
                 console.log(args)
                 if (args.success) {
                     this.calibrationError = args.data
@@ -267,6 +271,7 @@
                 }
             })
             ipcRenderer.on('parking_side-reply', (event, args) => {
+                console.log('parking_side 接收到了返回')
                 if (args.success) {
                     const data = args.data
                     if (data.parking && data.parking === 'yes') {
@@ -312,7 +317,7 @@
                                     })
                                     // 发送平均校准长宽
                                     console.log(Length)
-                                    const data = `{length: ${Length / 10}, height: ${Height / 10}`
+                                    const data = `{length: ${Length / 10}, height: ${Height / 10}}`
                                     console.log(data)
                                     ipcRenderer.send('parking_side', data)
                                 }
@@ -325,22 +330,22 @@
                 } else {
                     this.$message({
                         message: args.message,
-                        type: 'success'
+                        type: 'warning'
                     })
                 }
             })
             ipcRenderer.on('height_from_the_ground-reply', (event, args) => {
+                console.log(args)
                 if (args.success) {
-                    const data = args.data
-                    if (data.height_from_the_ground && data.height_from_the_ground === 'yes') {
-                        this.allowSaveSet = false
+                    if (args.data.height_from_the_ground) {
+                        console.log('发送成功')
                     } else {
-                        this.heightFromGround = data
-
+                        this.heightFromGround = args.data
+                        console.log(this.heightFromGround)
                         if (this.heightFromGround.No1 >= this.calibrationError.hog_min && this.heightFromGround.No1 <= this.calibrationError.hog_max) {
                             if (this.heightFromGroundAverage.No1.count < 5) {
                                 this.heightFromGroundAverage.No1.value.push(this.heightFromGround.No1)
-                                this.heightFromGroundAverage.No1.count = this.heightFromGroundAverage.No1.value.length
+                                this.heightFromGroundAverage.No1.count++
                             }
                         } else {
                             this.$message({
@@ -351,7 +356,7 @@
                         if (this.heightFromGround.No2 >= this.calibrationError.hog_min && this.heightFromGround.No2 <= this.calibrationError.hog_max) {
                             if (this.heightFromGroundAverage.No2.count < 5) {
                                 this.heightFromGroundAverage.No2.value.push(this.heightFromGround.No2)
-                                this.heightFromGroundAverage.No2.count = this.heightFromGroundAverage.No2.value.length
+                                this.heightFromGroundAverage.No2.count++
                             }
                         } else {
                             this.$message({
@@ -362,7 +367,7 @@
                         if (this.heightFromGround.No3 >= this.calibrationError.hog_min && this.heightFromGround.No3 <= this.calibrationError.hog_max) {
                             if (this.heightFromGroundAverage.No3.count < 5) {
                                 this.heightFromGroundAverage.No3.value.push(this.heightFromGround.No3)
-                                this.heightFromGroundAverage.No3.count = this.heightFromGroundAverage.No3.value.length
+                                this.heightFromGroundAverage.No3.count++
                             }
                         } else {
                             this.$message({
@@ -373,7 +378,7 @@
                         if (this.heightFromGround.No4 >= this.calibrationError.hog_min && this.heightFromGround.No4 <= this.calibrationError.hog_max) {
                             if (this.heightFromGroundAverage.No4.count < 5) {
                                 this.heightFromGroundAverage.No4.value.push(this.heightFromGround.No4)
-                                this.heightFromGroundAverage.No4.count = this.heightFromGroundAverage.No4.value.length
+                                this.heightFromGroundAverage.No4.count++
                             }
                         } else {
                             this.$message({
@@ -381,16 +386,41 @@
                                 type: 'warning'
                             })
                         }
-
-                        if (this.heightFromGroundAverage.No1.count === 5 && this.heightFromGroundAverage.No2.count === 5 && this.heightFromGroundAverage.No3.count === 5 && this.heightFromGroundAverage.No4.count === 5) {
+                        if ((this.heightFromGroundAverage.No1.count === 5 && this.heightFromGroundAverage.No2.count === 5) && (this.heightFromGroundAverage.No3.count === 5 && this.heightFromGroundAverage.No4.count === 5)) {
+                            console.log(this.heightFromGroundAverage)
                             const data = `{No1:${this.wheel1Height},No2:${this.wheel2Height},No3:${this.wheel3Height},No4:${this.wheel4Height}}`
                             console.log(data)
                             // this.runtimeMode = 0
-                            ipcRenderer.send('height_from_the_ground', data)
+                            this.onAllowSaveSet(data)
                         }
                     }
                 } else {
-
+                    this.$message({
+                        message: args.message,
+                        type: 'warning'
+                    })
+                }
+            })
+            ipcRenderer.once('finish_initialize-reply', (event, args) => {
+                if (args.success) {
+                    ipcRenderer.removeAllListeners('runtime_mode')
+                    ipcRenderer.removeAllListeners('runtime_mode-reply')
+                    ipcRenderer.removeAllListeners('view_layer2')
+                    ipcRenderer.removeAllListeners('view_layer2-reply')
+                    ipcRenderer.removeAllListeners('parking_side')
+                    ipcRenderer.removeAllListeners('parking_side-reply')
+                    ipcRenderer.removeAllListeners('height_from_the_ground')
+                    ipcRenderer.removeAllListeners('height_from_the_ground-reply')
+                    ipcRenderer.removeAllListeners('runtime_para')
+                    ipcRenderer.removeAllListeners('runtime_para-reply')
+                    ipcRenderer.removeAllListeners('finish_initialize')
+                    ipcRenderer.removeAllListeners('finish_initialize-reply')
+                    this.$router.push('/usermode/index')
+                } else {
+                    this.$message({
+                        message: args.message,
+                        type: 'warning'
+                    })
                 }
             })
         },
@@ -398,6 +428,10 @@
             this.drawLine()
         },
         methods: {
+            onAllowSaveSet (data) {
+                ipcRenderer.send('height_from_the_ground', data)
+                this.allowSaveSet = false
+            },
             onLevelCalibration () {
                 if (this.standard.length && this.standard.height) {
                     // 5次合格校准
@@ -546,7 +580,7 @@
                 }, true)
             },
             onSaveSettings () {
-                this.$router.push('/usermode/index')
+                ipcRenderer.send('finish_initialize')
             },
             onRefreshViewLayerData () {
                 // 视角

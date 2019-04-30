@@ -18,7 +18,7 @@ export default new Router({
       name: 'usermode',
       component: require('@/pages/usermode/index').default,
       meta: {
-        keepAlive: false // 不需要被缓存
+        keepAlive: true
       }
     },
     {
@@ -26,7 +26,7 @@ export default new Router({
       name: 'calibrationmodel',
       component: require('@/pages/calibrationmodel/index').default,
       meta: {
-        keepAlive: false // 不需要被缓存
+        keepAlive: true
       }
     },
     {

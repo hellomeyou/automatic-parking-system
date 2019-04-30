@@ -1,6 +1,6 @@
 'use strict'
 
-import { app, BrowserWindow, ipcMain } from 'electron'
+import { app, BrowserWindow, ipcMain, dialog } from 'electron'
 // import '../utils/server'
 import client from '../utils/client'
 
@@ -72,10 +72,14 @@ const Server = () => {
     const data = message.toString('utf8')
     let type = ''
     let obj = {}
-
-    if (data.match(/Err/)) {
-      obj.success = false
-      obj.message = data
+    if (data.match(/Err/) !== null) {
+      // obj.success = false
+      // obj.message = data
+      dialog.showMessageBox({
+        title: '错误',
+        type: 'error',
+        message: data
+      })
     } else {
       try {
         type = data.match(/ANS:(.*?)=/)[1]
@@ -84,35 +88,34 @@ const Server = () => {
       } catch (e) {
         obj.success = false
         obj.message = e
-        console.log(e)
       }
+    }
 
-      switch (type) {
-        case 'is_initialize':
-          mainWindow.webContents.send('is_initialize-reply', obj)
-          break
-        case 'runtime_para':
-          mainWindow.webContents.send('runtime_para-reply', obj)
-          break
-        case 'runtime_mode':
-          mainWindow.webContents.send('runtime_mode-reply', obj)
-          break
-        case 'parking_side':
-          mainWindow.webContents.send('parking_side-reply', obj)
-          break
-        case 'height_from_the_ground':
-          mainWindow.webContents.send('height_from_the_ground-reply', obj)
-          break
-        case 'view_layer2':
-          mainWindow.webContents.send('view_layer2-reply', obj)
-          break
-        case 'vehicle_attitude':
-          mainWindow.webContents.send('vehicle_attitude-reply', obj)
-          break
-        case 'finish_initialize':
-          mainWindow.webContents.send('finish_initialize-reply', obj)
-          break
-      }
+    switch (type) {
+      case 'is_initialize':
+        mainWindow.webContents.send('is_initialize-reply', obj)
+        break
+      case 'runtime_para':
+        mainWindow.webContents.send('runtime_para-reply', obj)
+        break
+      case 'runtime_mode':
+        mainWindow.webContents.send('runtime_mode-reply', obj)
+        break
+      case 'parking_side':
+        mainWindow.webContents.send('parking_side-reply', obj)
+        break
+      case 'height_from_the_ground':
+        mainWindow.webContents.send('height_from_the_ground-reply', obj)
+        break
+      case 'view_layer2':
+        mainWindow.webContents.send('view_layer2-reply', obj)
+        break
+      case 'vehicle_attitude':
+        mainWindow.webContents.send('vehicle_attitude-reply', obj)
+        break
+      case 'finish_initialize':
+        mainWindow.webContents.send('finish_initialize-reply', obj)
+        break
     }
   })
 
